@@ -36,14 +36,14 @@ std::map<std::string, std::string> readOUIFile(const std::string& path)
 
 bool isMacAddress(const std::string& macAddress)
 {
-    if(macAddress.length() < 17) {
+    if(macAddress.length() < 8) {
         return false;
     }
 
-    if(!(std::regex_match(macAddress, std::regex("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})"))))
-        return false;
+    if((std::regex_match(macAddress.substr(0, 8), std::regex("^([0-9A-Fa-f]{2}[:-]){2}([0-9A-Fa-f]{2})"))))
+        return true;
 
-    return true;
+    return false;
 }
 
 int main(int argc, char** argv)
@@ -67,16 +67,24 @@ int main(int argc, char** argv)
     }*/
     //10:9a:dd:66:ab:c7
     std::string mac = argv[1];
-    std::transform(mac.begin(), mac.end(),mac.begin(), ::toupper);
-     // replace all 'x' to 'y'
-    std::replace(mac.begin(), mac.end(), '-', ':');
-
+    
     if(!isMacAddress(mac)) {
         printf("\nNot a MAC address\n");
         return 1;
     }
 
-    printf("\n %s %s\n", mac.substr(0, 8).c_str(), ouiMap[mac.substr(0, 8)].c_str());
+    std::transform(mac.begin(), mac.end(),mac.begin(), ::toupper);
+     // replace all 'x' to 'y'
+    std::replace(mac.begin(), mac.end(), '-', ':');
 
+    std::string oui = mac.substr(0, 8);
+
+    auto it = ouiMap.find(oui);
+    if (it != ouiMap.end()) {
+        printf("\n %s %s\n", oui.c_str(), ouiMap[oui].c_str());
+    }
+    else {
+        printf("\nManufacturer not found for MAC address: %s", mac.c_str());
+    }
     return 0;
 }
