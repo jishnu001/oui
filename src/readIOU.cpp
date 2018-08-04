@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 #include <algorithm>
+#include <regex>
 
 std::map<std::string, std::string> readOUIFile(const std::string& path)
 {
@@ -33,6 +34,17 @@ std::map<std::string, std::string> readOUIFile(const std::string& path)
     return ouiMap;
 }
 
+bool isMacAddress(const std::string& macAddress)
+{
+    if(macAddress.length() < 17) {
+        return false;
+    }
+
+    if(!(std::regex_match(macAddress, std::regex("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})"))))
+        return false;
+
+    return true;
+}
 
 int main(int argc, char** argv)
 {
@@ -53,11 +65,17 @@ int main(int argc, char** argv)
         printf("\n%s %s\n", iterator->first.c_str()  , iterator->second.c_str() );
     // Repeat if you also want to iterate through the second map.
     }*/
-
+    //10:9a:dd:66:ab:c7
     std::string mac = argv[1];
     std::transform(mac.begin(), mac.end(),mac.begin(), ::toupper);
      // replace all 'x' to 'y'
     std::replace(mac.begin(), mac.end(), '-', ':');
+
+    if(!isMacAddress(mac)) {
+        printf("\nNot a MAC address\n");
+        return 1;
+    }
+
     printf("\n %s %s\n", mac.substr(0, 8).c_str(), ouiMap[mac.substr(0, 8)].c_str());
 
     return 0;
