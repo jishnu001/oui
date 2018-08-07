@@ -1,8 +1,21 @@
 import sys
 import re
+import threading
+
+macAddressList = dict()
+
+
+class myThread (threading.Thread):
+    def __init__(self, threadID, name, counter):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.counter = counter
+    def run(self):
+        readIOU()
 
 def readIOU():
-    d = dict()
+     
     for line in open('../oui.txt','r').readlines():
         if '(hex)' not in line: 
             continue
@@ -10,19 +23,34 @@ def readIOU():
         #print(f[0])
         c = f[1].split('\t\t', 1)
         #print(c[1])
-        d[f[0]] = c[1] 
+        macAddressList[f[0]] = c[1] 
 
-    return d
+        #print(c[1])
+
+    #return d
 
 
 def main(argv):
-    macAddressList = readIOU()
+
+    thread1 = myThread(1, "Thread-1", 1)
+    thread1.start()
+
+    # thread.start_new_thread(readIOU, ('', ''))
+     
     mac = argv[1]
-    matchObj = re.match("^([0-9A-Fa-f]{2}[:-]){2}([0-9A-Fa-f]{2})", mac, 0)
+    mac = mac.upper()
+    mac = mac.replace(':', '-')
+
+    matchObj = re.match("^([0-9A-Fa-f]{2}[:-]){2}([0-9A-Fa-f]{2})", mac[:8], 0)
+    
     if matchObj:
         #print(matchObj.group())
-        if mac in macAddressList:
-            print(macAddressList[mac])
+        thread1.join()
+
+        oui = mac[:8]
+
+        if oui in macAddressList:
+            print(macAddressList[oui])
         else:
             print('Manufacturer not found for MAC address: ' + mac)
 
