@@ -9,15 +9,24 @@ import (
     "strings"
 )
 
+type Result struct {
+    ouiMap map[string]string
+    err    error
+}
+
 //var ouiMap map[string]string
 
-func main() {
-
+func readOUIFile(channel chan (Result)) {
     ouiMap := make(map[string]string)
 
+    res := new(Result)
     file, err := ioutil.ReadFile("../oui.txt")
     if err != nil {
-        log.Fatal(err)
+        //log.Fatal(err)
+        res.err = err
+        channel <- *res
+
+        //return nil, err
     }
 
     //fmt.Println(file) // print the content as 'bytes'
@@ -26,16 +35,17 @@ func main() {
 
     list := strings.SplitAfter(str, "\n")
 
-    for i := 0; i < len(list); i++ {
+    for _, str := range list {
 
-        if strings.Contains(list[i], "(hex)") {
+        //fmt.Println(str)
+        if strings.Contains(str, "(hex)") {
 
-            a := strings.Index(list[i], "(")
-            mac := list[i][:a]
+            a := strings.Index(str, "(")
+            mac := str[:a]
             mac = strings.TrimSpace(mac)
             //fmt.Println(mac[:8])
-            a = strings.Index(list[i], ")")
-            company := list[i][a+1:]
+            a = strings.Index(str, ")")
+            company := str[a+1:]
             company = strings.TrimSpace(company)
             //fmt.Println(company)
 
@@ -43,6 +53,32 @@ func main() {
 
         }
     }
+
+    res.ouiMap = ouiMap
+    res.err = err
+    channel <- *res // send sum to c
+    //return ouiMap, err
+}
+
+func main() {
+
+    //ouiMap, err :=
+    res := new(Result)
+
+    channel := make(chan Result)
+
+    go readOUIFile(channel)
+
+    *res = <-channel
+
+    //fmt.Println(ouiMap)
+    //, <-channel // receive from c
+
+    if res.err != nil {
+        fmt.Println("Error reading OUI file")
+        log.Fatal(res.err)
+    }
+
     if len(os.Args) < 2 {
         fmt.Println("Usage " + os.Args[0] + " <mac>")
         return
@@ -55,7 +91,10 @@ func main() {
     }
 
     if matched {
-        elem, ok := ouiMap[macAddress[:8]]
+
+        //macAddress =
+        //macAddress =
+        elem, ok := res.ouiMap[strings.Replace(strings.ToUpper(macAddress), ":", "-", -1)[:8]]
 
         if ok {
             fmt.Println(elem)

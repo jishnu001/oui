@@ -4,6 +4,7 @@
 #include <fstream>
 #include <algorithm>
 #include <regex>
+#include <future>
 
 std::map<std::string, std::string> readOUIFile(const std::string& path)
 {
@@ -53,13 +54,14 @@ int main(int argc, char** argv)
         printf("\n%s\n", usage.c_str());
         return 1;
     }
-
-    std::map<std::string, std::string> ouiMap = readOUIFile("../oui.txt");
-
-    if(ouiMap.empty()) {
-        printf("\nError reading oui file, check path");
-        return 1;
-    }
+    
+    std::map<std::string, std::string> ouiMap;
+    //std::thread th(readOUIFile, "../oui.txt", std::ref(ouiMap));
+    auto handle = std::async(std::launch::async,
+                             readOUIFile, "../oui.txt");
+    
+    
+   /**/
     
     /*for(std::map<std::string, std::string>::iterator iterator = ouiMap.begin(); iterator != ouiMap.end(); iterator++) {
         printf("\n%s %s\n", iterator->first.c_str()  , iterator->second.c_str() );
@@ -78,6 +80,12 @@ int main(int argc, char** argv)
     std::replace(mac.begin(), mac.end(), '-', ':');
 
     std::string oui = mac.substr(0, 8);
+    //th.join();
+    ouiMap = handle.get();
+    if(ouiMap.empty()) {
+        printf("\nError reading oui file, check path");
+        return 1;
+    }
 
     auto it = ouiMap.find(oui);
     if (it != ouiMap.end()) {
